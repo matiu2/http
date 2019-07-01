@@ -1,12 +1,12 @@
-use HttpTryFrom;
 use byte_str::ByteStr;
 use bytes::{Bytes, BytesMut};
+use HttpTryFrom;
 
-use std::{fmt, mem};
 use std::borrow::Borrow;
+use std::error::Error;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
-use std::error::Error;
+use std::{fmt, mem};
 
 /// Represents an HTTP header field name
 ///
@@ -63,7 +63,7 @@ pub struct InvalidHeaderName {
 
 /// A possible error when converting a `HeaderName` from another type.
 #[derive(Debug)]
-pub struct InvalidHeaderNameBytes(InvalidHeaderName) ;
+pub struct InvalidHeaderNameBytes(InvalidHeaderName);
 
 macro_rules! standard_headers {
     (
@@ -985,82 +985,69 @@ standard_headers! {
 /// ```
 const HEADER_CHARS: [u8; 256] = [
     //  0      1      2      3      4      5      6      7      8      9
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //   x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //  1x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //  2x
-        0,     0,     0,  b'!',  b'"',  b'#',  b'$',  b'%',  b'&', b'\'', //  3x
-        0,     0,  b'*',  b'+',     0,  b'-',  b'.',     0,  b'0',  b'1', //  4x
-     b'2',  b'3',  b'4',  b'5',  b'6',  b'7',  b'8',  b'9',     0,     0, //  5x
-        0,     0,     0,     0,     0,  b'a',  b'b',  b'c',  b'd',  b'e', //  6x
-     b'f',  b'g',  b'h',  b'i',  b'j',  b'k',  b'l',  b'm',  b'n',  b'o', //  7x
-     b'p',  b'q',  b'r',  b's',  b't',  b'u',  b'v',  b'w',  b'x',  b'y', //  8x
-     b'z',     0,     0,     0,  b'^',  b'_',  b'`',  b'a',  b'b',  b'c', //  9x
-     b'd',  b'e',  b'f',  b'g',  b'h',  b'i',  b'j',  b'k',  b'l',  b'm', // 10x
-     b'n',  b'o',  b'p',  b'q',  b'r',  b's',  b't',  b'u',  b'v',  b'w', // 11x
-     b'x',  b'y',  b'z',     0,  b'|',     0,  b'~',     0,     0,     0, // 12x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 13x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 14x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 15x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 16x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 17x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 18x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 19x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 20x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 21x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 22x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 23x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 24x
-        0,     0,     0,     0,     0,     0                              // 25x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //   x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //  1x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //  2x
+    0, 0, 0, b'!', b'"', b'#', b'$', b'%', b'&', b'\'', //  3x
+    0, 0, b'*', b'+', 0, b'-', b'.', 0, b'0', b'1', //  4x
+    b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', 0, 0, //  5x
+    0, 0, 0, 0, 0, b'a', b'b', b'c', b'd', b'e', //  6x
+    b'f', b'g', b'h', b'i', b'j', b'k', b'l', b'm', b'n', b'o', //  7x
+    b'p', b'q', b'r', b's', b't', b'u', b'v', b'w', b'x', b'y', //  8x
+    b'z', 0, 0, 0, b'^', b'_', b'`', b'a', b'b', b'c', //  9x
+    b'd', b'e', b'f', b'g', b'h', b'i', b'j', b'k', b'l', b'm', // 10x
+    b'n', b'o', b'p', b'q', b'r', b's', b't', b'u', b'v', b'w', // 11x
+    b'x', b'y', b'z', 0, b'|', 0, b'~', 0, 0, 0, // 12x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 13x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 14x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 15x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 18x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 19x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 21x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 22x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 23x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 24x
+    0, 0, 0, 0, 0, 0, // 25x
 ];
 
 const HEADER_CHARS_H2: [u8; 256] = [
     //  0      1      2      3      4      5      6      7      8      9
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //   x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //  1x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //  2x
-        0,     0,     0,  b'!',  b'"',  b'#',  b'$',  b'%',  b'&', b'\'', //  3x
-        0,     0,  b'*',  b'+',     0,  b'-',  b'.',     0,  b'0',  b'1', //  4x
-     b'2',  b'3',  b'4',  b'5',  b'6',  b'7',  b'8',  b'9',     0,     0, //  5x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //  6x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //  7x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, //  8x
-        0,     0,     0,     0,  b'^',  b'_',  b'`',  b'a',  b'b',  b'c', //  9x
-     b'd',  b'e',  b'f',  b'g',  b'h',  b'i',  b'j',  b'k',  b'l',  b'm', // 10x
-     b'n',  b'o',  b'p',  b'q',  b'r',  b's',  b't',  b'u',  b'v',  b'w', // 11x
-     b'x',  b'y',  b'z',     0,  b'|',     0,  b'~',     0,     0,     0, // 12x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 13x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 14x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 15x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 16x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 17x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 18x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 19x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 20x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 21x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 22x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 23x
-        0,     0,     0,     0,     0,     0,     0,     0,     0,     0, // 24x
-        0,     0,     0,     0,     0,     0                              // 25x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //   x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //  1x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //  2x
+    0, 0, 0, b'!', b'"', b'#', b'$', b'%', b'&', b'\'', //  3x
+    0, 0, b'*', b'+', 0, b'-', b'.', 0, b'0', b'1', //  4x
+    b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', 0, 0, //  5x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //  6x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //  7x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //  8x
+    0, 0, 0, 0, b'^', b'_', b'`', b'a', b'b', b'c', //  9x
+    b'd', b'e', b'f', b'g', b'h', b'i', b'j', b'k', b'l', b'm', // 10x
+    b'n', b'o', b'p', b'q', b'r', b's', b't', b'u', b'v', b'w', // 11x
+    b'x', b'y', b'z', 0, b'|', 0, b'~', 0, 0, 0, // 12x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 13x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 14x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 15x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 17x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 18x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 19x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 21x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 22x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 23x
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 24x
+    0, 0, 0, 0, 0, 0, // 25x
 ];
 
-macro_rules! eq {
-    (($($cmp:expr,)*) $v:ident[$n:expr] ==) => {
-        $($cmp) && *
-    };
-    (($($cmp:expr,)*) $v:ident[$n:expr] == $a:tt $($rest:tt)*) => {
-        eq!(($($cmp,)* $v[$n] == $a,) $v[$n+1] == $($rest)*)
-    };
-    ($v:ident == $($rest:tt)+) => {
-        eq!(() $v[0] == $($rest)+)
-    };
-    ($v:ident[$n:expr] == $($rest:tt)+) => {
-        eq!(() $v[$n] == $($rest)+)
-    };
-}
-
-fn parse_hdr<'a>(data: &'a [u8], b: &'a mut [u8; 64], table: &[u8; 256])
-    -> Result<HdrName<'a>, InvalidHeaderName>
-{
+fn parse_hdr<'a>(
+    data: &'a [u8],
+    b: &'a mut [u8; 64],
+    table: &[u8; 256],
+) -> Result<HdrName<'a>, InvalidHeaderName> {
     use self::StandardHeader::*;
 
     let len = data.len();
@@ -1074,447 +1061,102 @@ fn parse_hdr<'a>(data: &'a [u8], b: &'a mut [u8; 64], table: &[u8; 256])
         }
     };
 
-
-    macro_rules! to_lower {
-        ($d:ident, $src:ident, 1) => { $d[0] = table[$src[0] as usize]; };
-        ($d:ident, $src:ident, 2) => { to_lower!($d, $src, 1); $d[1] = table[$src[1] as usize]; };
-        ($d:ident, $src:ident, 3) => { to_lower!($d, $src, 2); $d[2] = table[$src[2] as usize]; };
-        ($d:ident, $src:ident, 4) => { to_lower!($d, $src, 3); $d[3] = table[$src[3] as usize]; };
-        ($d:ident, $src:ident, 5) => { to_lower!($d, $src, 4); $d[4] = table[$src[4] as usize]; };
-        ($d:ident, $src:ident, 6) => { to_lower!($d, $src, 5); $d[5] = table[$src[5] as usize]; };
-        ($d:ident, $src:ident, 7) => { to_lower!($d, $src, 6); $d[6] = table[$src[6] as usize]; };
-        ($d:ident, $src:ident, 8) => { to_lower!($d, $src, 7); $d[7] = table[$src[7] as usize]; };
-        ($d:ident, $src:ident, 9) => { to_lower!($d, $src, 8); $d[8] = table[$src[8] as usize]; };
-        ($d:ident, $src:ident, 10) => { to_lower!($d, $src, 9); $d[9] = table[$src[9] as usize]; };
-        ($d:ident, $src:ident, 11) => { to_lower!($d, $src, 10); $d[10] = table[$src[10] as usize]; };
-        ($d:ident, $src:ident, 12) => { to_lower!($d, $src, 11); $d[11] = table[$src[11] as usize]; };
-        ($d:ident, $src:ident, 13) => { to_lower!($d, $src, 12); $d[12] = table[$src[12] as usize]; };
-        ($d:ident, $src:ident, 14) => { to_lower!($d, $src, 13); $d[13] = table[$src[13] as usize]; };
-        ($d:ident, $src:ident, 15) => { to_lower!($d, $src, 14); $d[14] = table[$src[14] as usize]; };
-        ($d:ident, $src:ident, 16) => { to_lower!($d, $src, 15); $d[15] = table[$src[15] as usize]; };
-        ($d:ident, $src:ident, 17) => { to_lower!($d, $src, 16); $d[16] = table[$src[16] as usize]; };
-        ($d:ident, $src:ident, 18) => { to_lower!($d, $src, 17); $d[17] = table[$src[17] as usize]; };
-        ($d:ident, $src:ident, 19) => { to_lower!($d, $src, 18); $d[18] = table[$src[18] as usize]; };
-        ($d:ident, $src:ident, 20) => { to_lower!($d, $src, 19); $d[19] = table[$src[19] as usize]; };
-        ($d:ident, $src:ident, 21) => { to_lower!($d, $src, 20); $d[20] = table[$src[20] as usize]; };
-        ($d:ident, $src:ident, 22) => { to_lower!($d, $src, 21); $d[21] = table[$src[21] as usize]; };
-        ($d:ident, $src:ident, 23) => { to_lower!($d, $src, 22); $d[22] = table[$src[22] as usize]; };
-        ($d:ident, $src:ident, 24) => { to_lower!($d, $src, 23); $d[23] = table[$src[23] as usize]; };
-        ($d:ident, $src:ident, 25) => { to_lower!($d, $src, 24); $d[24] = table[$src[24] as usize]; };
-        ($d:ident, $src:ident, 26) => { to_lower!($d, $src, 25); $d[25] = table[$src[25] as usize]; };
-        ($d:ident, $src:ident, 27) => { to_lower!($d, $src, 26); $d[26] = table[$src[26] as usize]; };
-        ($d:ident, $src:ident, 28) => { to_lower!($d, $src, 27); $d[27] = table[$src[27] as usize]; };
-        ($d:ident, $src:ident, 29) => { to_lower!($d, $src, 28); $d[28] = table[$src[28] as usize]; };
-        ($d:ident, $src:ident, 30) => { to_lower!($d, $src, 29); $d[29] = table[$src[29] as usize]; };
-        ($d:ident, $src:ident, 31) => { to_lower!($d, $src, 30); $d[30] = table[$src[30] as usize]; };
-        ($d:ident, $src:ident, 32) => { to_lower!($d, $src, 31); $d[31] = table[$src[31] as usize]; };
-        ($d:ident, $src:ident, 33) => { to_lower!($d, $src, 32); $d[32] = table[$src[32] as usize]; };
-        ($d:ident, $src:ident, 34) => { to_lower!($d, $src, 33); $d[33] = table[$src[33] as usize]; };
-        ($d:ident, $src:ident, 35) => { to_lower!($d, $src, 34); $d[34] = table[$src[34] as usize]; };
-    }
-
-    assert!(len < super::MAX_HEADER_NAME_LEN,
-            "header name too long -- max length is {}",
-            super::MAX_HEADER_NAME_LEN);
+    assert!(
+        len < super::MAX_HEADER_NAME_LEN,
+        "header name too long -- max length is {}",
+        super::MAX_HEADER_NAME_LEN
+    );
 
     match len {
-        0 => {
-            Err(InvalidHeaderName::new())
-        }
-        2 => {
-            to_lower!(b, data, 2);
-
-            if eq!(b == b't' b'e') {
-                Ok(Te.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        3 => {
-            to_lower!(b, data, 3);
-
-            if eq!(b == b'a' b'g' b'e') {
-                Ok(Age.into())
-            } else if eq!(b == b'v' b'i' b'a') {
-                Ok(Via.into())
-            } else if eq!(b == b'd' b'n' b't') {
-                Ok(Dnt.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        4 => {
-            to_lower!(b, data, 4);
-
-            if eq!(b == b'd' b'a' b't' b'e') {
-                Ok(Date.into())
-            } else if eq!(b == b'e' b't' b'a' b'g') {
-                Ok(Etag.into())
-            } else if eq!(b == b'f' b'r' b'o' b'm') {
-                Ok(From.into())
-            } else if eq!(b == b'h' b'o' b's' b't') {
-                Ok(Host.into())
-            } else if eq!(b == b'l' b'i' b'n' b'k') {
-                Ok(Link.into())
-            } else if eq!(b == b'v' b'a' b'r' b'y') {
-                Ok(Vary.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        5 => {
-            to_lower!(b, data, 5);
-
-            if eq!(b == b'a' b'l' b'l' b'o' b'w') {
-                Ok(Allow.into())
-            } else if eq!(b == b'r' b'a' b'n' b'g' b'e') {
-                Ok(Range.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        6 => {
-            to_lower!(b, data, 6);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b'p' b't') {
-                return Ok(Accept.into())
-            } else if eq!(b == b'c' b'o' b'o' b'k' b'i' b'e') {
-                return Ok(Cookie.into())
-            } else if eq!(b == b'e' b'x' b'p' b'e' b'c' b't') {
-                return Ok(Expect.into())
-            } else if eq!(b == b'o' b'r' b'i' b'g' b'i' b'n') {
-                return Ok(Origin.into())
-            } else if eq!(b == b'p' b'r' b'a' b'g' b'm' b'a') {
-                return Ok(Pragma.into())
-            } else if b[0] == b's' {
-                if eq!(b[1] == b'e' b'r' b'v' b'e' b'r') {
-                    return Ok(Server.into())
+        0 => Err(InvalidHeaderName::new()),
+        len if len > 64 => Ok(HdrName::custom(data, false)),
+        len => {
+            let word = &mut b[..len];
+            // Read from data into the buffer (word) - transforming using `table` as we go
+            data.iter().take(len).enumerate().for_each(|(i, c)| word[i] = table[*c as usize]);
+            match word as &[u8] {
+                b"te" => Ok(Te.into()),
+                b"age" => Ok(Age.into()),
+                b"via" => Ok(Via.into()),
+                b"dnt" => Ok(Dnt.into()),
+                b"date" => Ok(Date.into()),
+                b"etag" => Ok(Etag.into()),
+                b"from" => Ok(From.into()),
+                b"host" => Ok(Host.into()),
+                b"link" => Ok(Link.into()),
+                b"vary" => Ok(Vary.into()),
+                b"allow" => Ok(Allow.into()),
+                b"range" => Ok(Range.into()),
+                b"accept" => Ok(Accept.into()),
+                b"cookie" => Ok(Cookie.into()),
+                b"expect" => Ok(Expect.into()),
+                b"origin" => Ok(Origin.into()),
+                b"pragma" => Ok(Pragma.into()),
+                b"server" => Ok(Server.into()),
+                b"alt-svc" => Ok(AltSvc.into()),
+                b"expires" => Ok(Expires.into()),
+                b"referer" => Ok(Referer.into()),
+                b"refresh" => Ok(Refresh.into()),
+                b"trailer" => Ok(Trailer.into()),
+                b"upgrade" => Ok(Upgrade.into()),
+                b"warning" => Ok(Warning.into()),
+                b"if-match" => Ok(IfMatch.into()),
+                b"if-range" => Ok(IfRange.into()),
+                b"location" => Ok(Location.into()),
+                b"forwarded" => Ok(Forwarded.into()),
+                b"connection" => Ok(Connection.into()),
+                b"set-cookie" => Ok(SetCookie.into()),
+                b"user-agent" => Ok(UserAgent.into()),
+                b"retry-after" => Ok(RetryAfter.into()),
+                b"content-type" => Ok(ContentType.into()),
+                b"max-forwards" => Ok(MaxForwards.into()),
+                b"accept-ranges" => Ok(AcceptRanges.into()),
+                b"authorization" => Ok(Authorization.into()),
+                b"cache-control" => Ok(CacheControl.into()),
+                b"content-range" => Ok(ContentRange.into()),
+                b"if-none-match" => Ok(IfNoneMatch.into()),
+                b"last-modified" => Ok(LastModified.into()),
+                b"accept-charset" => Ok(AcceptCharset.into()),
+                b"content-length" => Ok(ContentLength.into()),
+                b"accept-encoding" => Ok(AcceptEncoding.into()),
+                b"accept-language" => Ok(AcceptLanguage.into()),
+                b"public-key-pins" => Ok(PublicKeyPins.into()),
+                b"x-frame-options" => Ok(XFrameOptions.into()),
+                b"referrer-policy" => Ok(ReferrerPolicy.into()),
+                b"content-language" => Ok(ContentLanguage.into()),
+                b"content-location" => Ok(ContentLocation.into()),
+                b"content-encoding" => Ok(ContentEncoding.into()),
+                b"www-authenticate" => Ok(WwwAuthenticate.into()),
+                b"x-xss-protection" => Ok(XXssProtection.into()),
+                b"transfer-encoding" => Ok(TransferEncoding.into()),
+                b"if-modified-since" => Ok(IfModifiedSince.into()),
+                b"sec-websocket-key" => Ok(SecWebSocketKey.into()),
+                b"proxy-authenticate" => Ok(ProxyAuthenticate.into()),
+                b"content-disposition" => Ok(ContentDisposition.into()),
+                b"if-unmodified-since" => Ok(IfUnmodifiedSince.into()),
+                b"proxy-authorization" => Ok(ProxyAuthorization.into()),
+                b"sec-websocket-accept" => Ok(SecWebSocketAccept.into()),
+                b"sec-websocket-version" => Ok(SecWebSocketVersion.into()),
+                b"access-control-max-age" => Ok(AccessControlMaxAge.into()),
+                b"x-content-type-options" => Ok(XContentTypeOptions.into()),
+                b"x-dns-prefetch-control" => Ok(XDnsPrefetchControl.into()),
+                b"sec-websocket-protocol" => Ok(SecWebSocketProtocol.into()),
+                b"content-security-policy" => Ok(ContentSecurityPolicy.into()),
+                b"sec-websocket-extensions" => Ok(SecWebSocketExtensions.into()),
+                b"strict-transport-security" => Ok(StrictTransportSecurity.into()),
+                b"upgrade-insecure-requests" => Ok(UpgradeInsecureRequests.into()),
+                b"access-control-allow-origin" => Ok(AccessControlAllowOrigin.into()),
+                b"public-key-pins-report-only" => Ok(PublicKeyPinsReportOnly.into()),
+                b"access-control-allow-headers" => Ok(AccessControlAllowHeaders.into()),
+                b"access-control-allow-methods" => Ok(AccessControlAllowMethods.into()),
+                b"access-control-expose-headers" => Ok(AccessControlExposeHeaders.into()),
+                b"access-control-request-method" => Ok(AccessControlRequestMethod.into()),
+                b"access-control-request-headers" => Ok(AccessControlRequestHeaders.into()),
+                b"access-control-allow-credentials" => Ok(AccessControlAllowCredentials.into()),
+                b"content-security-policy-report-only" => {
+                    Ok(ContentSecurityPolicyReportOnly.into())
                 }
-            }
-
-            validate(b, len)
-        }
-        7 => {
-            to_lower!(b, data, 7);
-
-            if eq!(b == b'a' b'l' b't' b'-' b's' b'v' b'c') {
-                Ok(AltSvc.into())
-            } else if eq!(b == b'e' b'x' b'p' b'i' b'r' b'e' b's') {
-                Ok(Expires.into())
-            } else if eq!(b == b'r' b'e' b'f' b'e' b'r' b'e' b'r') {
-                Ok(Referer.into())
-            } else if eq!(b == b'r' b'e' b'f' b'r' b'e' b's' b'h') {
-                Ok(Refresh.into())
-            } else if eq!(b == b't' b'r' b'a' b'i' b'l' b'e' b'r') {
-                Ok(Trailer.into())
-            } else if eq!(b == b'u' b'p' b'g' b'r' b'a' b'd' b'e') {
-                Ok(Upgrade.into())
-            } else if eq!(b == b'w' b'a' b'r' b'n' b'i' b'n' b'g') {
-                Ok(Warning.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        8 => {
-            to_lower!(b, data, 8);
-
-            if eq!(b == b'i' b'f' b'-') {
-                if eq!(b[3] == b'm' b'a' b't' b'c' b'h') {
-                    return Ok(IfMatch.into())
-                } else if eq!(b[3] == b'r' b'a' b'n' b'g' b'e') {
-                    return Ok(IfRange.into())
-                }
-            } else if eq!(b == b'l' b'o' b'c' b'a' b't' b'i' b'o' b'n') {
-                return Ok(Location.into())
-            }
-
-            validate(b, len)
-        }
-        9 => {
-            to_lower!(b, data, 9);
-
-            if eq!(b == b'f' b'o' b'r' b'w' b'a' b'r' b'd' b'e' b'd') {
-                Ok(Forwarded.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        10 => {
-            to_lower!(b, data, 10);
-
-            if eq!(b == b'c' b'o' b'n' b'n' b'e' b'c' b't' b'i' b'o' b'n') {
-                Ok(Connection.into())
-            } else if eq!(b == b's' b'e' b't' b'-' b'c' b'o' b'o' b'k' b'i' b'e') {
-                Ok(SetCookie.into())
-            } else if eq!(b == b'u' b's' b'e' b'r' b'-' b'a' b'g' b'e' b'n' b't') {
-                Ok(UserAgent.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        11 => {
-            to_lower!(b, data, 11);
-
-            if eq!(b == b'r' b'e' b't' b'r' b'y' b'-' b'a' b'f' b't' b'e' b'r') {
-                Ok(RetryAfter.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        12 => {
-            to_lower!(b, data, 12);
-
-            if eq!(b == b'c' b'o' b'n' b't' b'e' b'n' b't' b'-' b't' b'y' b'p' b'e') {
-                Ok(ContentType.into())
-            } else if eq!(b == b'm' b'a' b'x' b'-' b'f' b'o' b'r' b'w' b'a' b'r' b'd' b's') {
-                Ok(MaxForwards.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        13 => {
-            to_lower!(b, data, 13);
-
-            if b[0] == b'a' {
-                if eq!(b[1] == b'c' b'c' b'e' b'p' b't' b'-' b'r' b'a' b'n' b'g' b'e' b's') {
-                    return Ok(AcceptRanges.into())
-                } else if eq!(b[1] == b'u' b't' b'h' b'o' b'r' b'i' b'z' b'a' b't' b'i' b'o' b'n') {
-                    return Ok(Authorization.into())
-                }
-            } else if b[0] == b'c' {
-                if eq!(b[1] == b'a' b'c' b'h' b'e' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l') {
-                    return Ok(CacheControl.into())
-                } else if eq!(b[1] == b'o' b'n' b't' b'e' b'n' b't' b'-' b'r' b'a' b'n' b'g' b'e' ) {
-                    return Ok(ContentRange.into())
-                }
-            } else if eq!(b == b'i' b'f' b'-' b'n' b'o' b'n' b'e' b'-' b'm' b'a' b't' b'c' b'h') {
-                return Ok(IfNoneMatch.into())
-            } else if eq!(b == b'l' b'a' b's' b't' b'-' b'm' b'o' b'd' b'i' b'f' b'i' b'e' b'd') {
-                return Ok(LastModified.into())
-            }
-
-            validate(b, len)
-        }
-        14 => {
-            to_lower!(b, data, 14);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b'p' b't' b'-' b'c' b'h' b'a' b'r' b's' b'e' b't') {
-                Ok(AcceptCharset.into())
-            } else if eq!(b == b'c' b'o' b'n' b't' b'e' b'n' b't' b'-' b'l' b'e' b'n' b'g' b't' b'h') {
-                Ok(ContentLength.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        15 => {
-            to_lower!(b, data, 15);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b'p' b't' b'-') { // accept-
-                if eq!(b[7] == b'e' b'n' b'c' b'o' b'd' b'i' b'n' b'g') {
-                    return Ok(AcceptEncoding.into())
-                } else if eq!(b[7] == b'l' b'a' b'n' b'g' b'u' b'a' b'g' b'e') {
-                    return Ok(AcceptLanguage.into())
-                }
-            } else if eq!(b == b'p' b'u' b'b' b'l' b'i' b'c' b'-' b'k' b'e' b'y' b'-' b'p' b'i' b'n' b's') {
-                return Ok(PublicKeyPins.into())
-            } else if eq!(b == b'x' b'-' b'f' b'r' b'a' b'm' b'e' b'-' b'o' b'p' b't' b'i' b'o' b'n' b's') {
-                return Ok(XFrameOptions.into())
-            }
-            else if eq!(b == b'r' b'e' b'f' b'e' b'r' b'r' b'e' b'r' b'-' b'p' b'o' b'l' b'i' b'c' b'y') {
-                return Ok(ReferrerPolicy.into())
-            }
-
-            validate(b, len)
-        }
-        16 => {
-            to_lower!(b, data, 16);
-
-            if eq!(b == b'c' b'o' b'n' b't' b'e' b'n' b't' b'-') {
-                if eq!(b[8] == b'l' b'a' b'n' b'g' b'u' b'a' b'g' b'e') {
-                    return Ok(ContentLanguage.into())
-                } else if eq!(b[8] == b'l' b'o' b'c' b'a' b't' b'i' b'o' b'n') {
-                    return Ok(ContentLocation.into())
-                } else if eq!(b[8] == b'e' b'n' b'c' b'o' b'd' b'i' b'n' b'g') {
-                    return Ok(ContentEncoding.into())
-                }
-            } else if eq!(b == b'w' b'w' b'w' b'-' b'a' b'u' b't' b'h' b'e' b'n' b't' b'i' b'c' b'a' b't' b'e') {
-                return Ok(WwwAuthenticate.into())
-            } else if eq!(b == b'x' b'-' b'x' b's' b's' b'-' b'p' b'r' b'o' b't' b'e' b'c' b't' b'i' b'o' b'n') {
-                return Ok(XXssProtection.into())
-            }
-
-            validate(b, len)
-        }
-        17 => {
-            to_lower!(b, data, 17);
-
-            if eq!(b == b't' b'r' b'a' b'n' b's' b'f' b'e' b'r' b'-' b'e' b'n' b'c' b'o' b'd' b'i' b'n' b'g') {
-                Ok(TransferEncoding.into())
-            } else if eq!(b == b'i' b'f' b'-' b'm' b'o' b'd' b'i' b'f' b'i' b'e' b'd' b'-' b's' b'i' b'n' b'c' b'e') {
-                Ok(IfModifiedSince.into())
-            } else if eq!(b == b's' b'e' b'c' b'-' b'w' b'e' b'b' b's' b'o' b'c' b'k' b'e' b't' b'-' b'k' b'e' b'y') {
-                Ok(SecWebSocketKey.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        18 => {
-            to_lower!(b, data, 18);
-
-            if eq!(b == b'p' b'r' b'o' b'x' b'y' b'-' b'a' b'u' b't' b'h' b'e' b'n' b't' b'i' b'c' b'a' b't' b'e') {
-                Ok(ProxyAuthenticate.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        19 => {
-            to_lower!(b, data, 19);
-
-            if eq!(b == b'c' b'o' b'n' b't' b'e' b'n' b't' b'-' b'd' b'i' b's' b'p' b'o' b's' b'i' b't' b'i' b'o' b'n') {
-                Ok(ContentDisposition.into())
-            } else if eq!(b == b'i' b'f' b'-' b'u' b'n' b'm' b'o' b'd' b'i' b'f' b'i' b'e' b'd' b'-' b's' b'i' b'n' b'c' b'e') {
-                Ok(IfUnmodifiedSince.into())
-            } else if eq!(b == b'p' b'r' b'o' b'x' b'y' b'-' b'a' b'u' b't' b'h' b'o' b'r' b'i' b'z' b'a' b't' b'i' b'o' b'n') {
-                Ok(ProxyAuthorization.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        20 => {
-            to_lower!(b, data, 20);
-
-            if eq!(b == b's' b'e' b'c' b'-' b'w' b'e' b'b' b's' b'o' b'c' b'k' b'e' b't' b'-' b'a' b'c' b'c' b'e' b'p' b't') {
-                Ok(SecWebSocketAccept.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        21 => {
-            to_lower!(b, data, 21);
-
-            if eq!(b == b's' b'e' b'c' b'-' b'w' b'e' b'b' b's' b'o' b'c' b'k' b'e' b't' b'-' b'v' b'e' b'r' b's' b'i' b'o' b'n') {
-                Ok(SecWebSocketVersion.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        22 => {
-            to_lower!(b, data, 22);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b's' b's' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l' b'-' b'm' b'a' b'x' b'-' b'a' b'g' b'e') {
-                Ok(AccessControlMaxAge.into())
-            } else if eq!(b == b'x' b'-' b'c' b'o' b'n' b't' b'e' b'n' b't' b'-' b't' b'y' b'p' b'e' b'-' b'o' b'p' b't' b'i' b'o' b'n' b's') {
-                Ok(XContentTypeOptions.into())
-            } else if eq!(b == b'x' b'-' b'd' b'n' b's' b'-' b'p' b'r' b'e' b'f' b'e' b't' b'c' b'h' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l') {
-                Ok(XDnsPrefetchControl.into())
-            } else if eq!(b == b's' b'e' b'c' b'-' b'w' b'e' b'b' b's' b'o' b'c' b'k' b'e' b't' b'-' b'p' b'r' b'o' b't' b'o' b'c' b'o' b'l') {
-                Ok(SecWebSocketProtocol.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        23 => {
-            to_lower!(b, data, 23);
-
-            if eq!(b == b'c' b'o' b'n' b't' b'e' b'n' b't' b'-' b's' b'e' b'c' b'u' b'r' b'i' b't' b'y' b'-' b'p' b'o' b'l' b'i' b'c' b'y') {
-                Ok(ContentSecurityPolicy.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        24 => {
-            to_lower!(b, data, 24);
-
-            if eq!(b == b's' b'e' b'c' b'-' b'w' b'e' b'b' b's' b'o' b'c' b'k' b'e' b't' b'-' b'e' b'x' b't' b'e' b'n' b's' b'i' b'o' b'n' b's') {
-                Ok(SecWebSocketExtensions.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        25 => {
-            to_lower!(b, data, 25);
-
-            if eq!(b == b's' b't' b'r' b'i' b'c' b't' b'-' b't' b'r' b'a' b'n' b's' b'p' b'o' b'r' b't' b'-' b's' b'e' b'c' b'u' b'r' b'i' b't' b'y') {
-                Ok(StrictTransportSecurity.into())
-            } else if eq!(b == b'u' b'p' b'g' b'r' b'a' b'd' b'e' b'-' b'i' b'n' b's' b'e' b'c' b'u' b'r' b'e' b'-' b'r' b'e' b'q' b'u' b'e' b's' b't' b's') {
-                Ok(UpgradeInsecureRequests.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        27 => {
-            to_lower!(b, data, 27);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b's' b's' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l' b'-' b'a' b'l' b'l' b'o' b'w' b'-' b'o' b'r' b'i' b'g' b'i' b'n') {
-                Ok(AccessControlAllowOrigin.into())
-            } else if eq!(b == b'p' b'u' b'b' b'l' b'i' b'c' b'-' b'k' b'e' b'y' b'-' b'p' b'i' b'n' b's' b'-' b'r' b'e' b'p' b'o' b'r' b't' b'-' b'o' b'n' b'l' b'y') {
-                Ok(PublicKeyPinsReportOnly.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        28 => {
-            to_lower!(b, data, 28);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b's' b's' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l' b'-' b'a' b'l' b'l' b'o' b'w' b'-') {
-                if eq!(b[21] == b'h' b'e' b'a' b'd' b'e' b'r' b's') {
-                    return Ok(AccessControlAllowHeaders.into())
-                } else if eq!(b[21] == b'm' b'e' b't' b'h' b'o' b'd' b's') {
-                    return Ok(AccessControlAllowMethods.into())
-                }
-            }
-
-            validate(b, len)
-        }
-        29 => {
-            to_lower!(b, data, 29);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b's' b's' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l' b'-') {
-                if eq!(b[15] == b'e' b'x' b'p' b'o' b's' b'e' b'-' b'h' b'e' b'a' b'd' b'e' b'r' b's') {
-                    return Ok(AccessControlExposeHeaders.into())
-                } else if eq!(b[15] == b'r' b'e' b'q' b'u' b'e' b's' b't' b'-' b'm' b'e' b't' b'h' b'o' b'd') {
-                    return Ok(AccessControlRequestMethod.into())
-                }
-            }
-
-            validate(b, len)
-        }
-        30 => {
-            to_lower!(b, data, 30);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b's' b's' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l' b'-' b'r' b'e' b'q' b'u' b'e' b's' b't' b'-' b'h' b'e' b'a' b'd' b'e' b'r' b's') {
-                Ok(AccessControlRequestHeaders.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        32 => {
-            to_lower!(b, data, 32);
-
-            if eq!(b == b'a' b'c' b'c' b'e' b's' b's' b'-' b'c' b'o' b'n' b't' b'r' b'o' b'l' b'-' b'a' b'l' b'l' b'o' b'w' b'-' b'c' b'r' b'e' b'd' b'e' b'n' b't' b'i' b'a' b'l' b's') {
-                Ok(AccessControlAllowCredentials.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        35 => {
-            to_lower!(b, data, 35);
-
-            if eq!(b == b'c' b'o' b'n' b't' b'e' b'n' b't' b'-' b's' b'e' b'c' b'u' b'r' b'i' b't' b'y' b'-' b'p' b'o' b'l' b'i' b'c' b'y' b'-' b'r' b'e' b'p' b'o' b'r' b't' b'-' b'o' b'n' b'l' b'y') {
-                Ok(ContentSecurityPolicyReportOnly.into())
-            } else {
-                validate(b, len)
-            }
-        }
-        _ => {
-            if len < 64 {
-                for i in 0..len {
-                    b[i] = table[data[i] as usize];
-                }
-
-                validate(b, len)
-            } else {
-                Ok(HdrName::custom(data, false))
+                other => validate(other, len),
             }
         }
     }
@@ -1522,7 +1164,9 @@ fn parse_hdr<'a>(data: &'a [u8], b: &'a mut [u8; 64], table: &[u8; 256])
 
 impl<'a> From<StandardHeader> for HdrName<'a> {
     fn from(hdr: StandardHeader) -> HdrName<'a> {
-        HdrName { inner: Repr::Standard(hdr) }
+        HdrName {
+            inner: Repr::Standard(hdr),
+        }
     }
 }
 
@@ -1541,7 +1185,7 @@ impl HeaderName {
                 Ok(Custom(val).into())
             }
             Repr::Custom(MaybeLower { buf, lower: false }) => {
-                use bytes::{BufMut};
+                use bytes::BufMut;
                 let mut dst = BytesMut::with_capacity(buf.len());
 
                 for b in buf.iter() {
@@ -1606,11 +1250,11 @@ impl HeaderName {
     /// Converts a static string to a HTTP header name.
     ///
     /// This function panics when the static string is a invalid header.
-    /// 
-    /// This function requires the static string to only contain lowercase 
-    /// characters, numerals and symbols, as per the HTTP/2.0 specification 
+    ///
+    /// This function requires the static string to only contain lowercase
+    /// characters, numerals and symbols, as per the HTTP/2.0 specification
     /// and header names internal representation within this library.
-    /// 
+    ///
     ///
     /// # Examples
     ///
@@ -1619,21 +1263,21 @@ impl HeaderName {
     /// // Parsing a standard header
     /// let hdr = HeaderName::from_static("content-length");
     /// assert_eq!(CONTENT_LENGTH, hdr);
-    /// 
+    ///
     /// // Parsing a custom header
     /// let CUSTOM_HEADER: &'static str = "custom-header";
-    /// 
+    ///
     /// let a = HeaderName::from_lowercase(b"custom-header").unwrap();
     /// let b = HeaderName::from_static(CUSTOM_HEADER);
     /// assert_eq!(a, b);
     /// ```
-    /// 
+    ///
     /// ```should_panic
     /// # use http::header::*;
     /// #
     /// // Parsing a header that contains invalid symbols(s):
     /// HeaderName::from_static("content{}{}length"); // This line panics!
-    /// 
+    ///
     /// // Parsing a header that contains invalid uppercase characters.
     /// let a = HeaderName::from_static("foobar");
     /// let b = HeaderName::from_static("FOOBAR"); // This line panics!
@@ -1645,11 +1289,17 @@ impl HeaderName {
         match parse_hdr(bytes, &mut buf, &HEADER_CHARS_H2) {
             Ok(hdr_name) => match hdr_name.inner {
                 Repr::Standard(std) => std.into(),
-                Repr::Custom(MaybeLower { buf: _, lower: true }) => {
+                Repr::Custom(MaybeLower {
+                    buf: _,
+                    lower: true,
+                }) => {
                     let val = ByteStr::from_static(src);
                     Custom(val).into()
-                },
-                Repr::Custom(MaybeLower { buf: _, lower: false }) => {
+                }
+                Repr::Custom(MaybeLower {
+                    buf: _,
+                    lower: false,
+                }) => {
                     // With lower false, the string is left unchecked by
                     // parse_hdr and must be validated manually.
                     for &b in bytes.iter() {
@@ -1663,7 +1313,7 @@ impl HeaderName {
                 }
             },
 
-            Err(_) => panic!("invalid header name")
+            Err(_) => panic!("invalid header name"),
         }
     }
 
@@ -1683,10 +1333,7 @@ impl FromStr for HeaderName {
     type Err = InvalidHeaderName;
 
     fn from_str(s: &str) -> Result<HeaderName, InvalidHeaderName> {
-        HeaderName::from_bytes(s.as_bytes())
-            .map_err(|_| InvalidHeaderName {
-                _priv: (),
-            })
+        HeaderName::from_bytes(s.as_bytes()).map_err(|_| InvalidHeaderName { _priv: () })
     }
 }
 
@@ -1734,12 +1381,13 @@ impl<'a> From<&'a HeaderName> for HeaderName {
 
 #[doc(hidden)]
 impl<T> From<Repr<T>> for Bytes
-where T: Into<Bytes> {
+where
+    T: Into<Bytes>,
+{
     fn from(repr: Repr<T>) -> Bytes {
         match repr {
-            Repr::Standard(header) =>
-                Bytes::from_static(header.as_str().as_bytes()),
-            Repr::Custom(header) => header.into()
+            Repr::Standard(header) => Bytes::from_static(header.as_str().as_bytes()),
+            Repr::Custom(header) => header.into(),
         }
     }
 }
@@ -1803,7 +1451,9 @@ impl From<StandardHeader> for HeaderName {
 #[doc(hidden)]
 impl From<Custom> for HeaderName {
     fn from(src: Custom) -> HeaderName {
-        HeaderName { inner: Repr::Custom(src) }
+        HeaderName {
+            inner: Repr::Custom(src),
+        }
     }
 }
 
@@ -1813,7 +1463,6 @@ impl<'a> PartialEq<&'a HeaderName> for HeaderName {
         *self == **other
     }
 }
-
 
 impl<'a> PartialEq<HeaderName> for &'a HeaderName {
     #[inline]
@@ -1840,7 +1489,6 @@ impl PartialEq<str> for HeaderName {
         eq_ignore_ascii_case(self.as_ref(), other.as_bytes())
     }
 }
-
 
 impl PartialEq<HeaderName> for str {
     /// Performs a case-insensitive comparison of the string against the header
@@ -1869,7 +1517,6 @@ impl<'a> PartialEq<&'a str> for HeaderName {
         *self == **other
     }
 }
-
 
 impl<'a> PartialEq<HeaderName> for &'a str {
     /// Performs a case-insensitive comparison of the string against the header
@@ -1918,7 +1565,8 @@ impl<'a> HdrName<'a> {
 
     #[allow(deprecated)]
     pub fn from_bytes<F, U>(hdr: &[u8], f: F) -> Result<U, InvalidHeaderName>
-        where F: FnOnce(HdrName) -> U,
+    where
+        F: FnOnce(HdrName) -> U,
     {
         let mut buf = unsafe { mem::uninitialized() };
         let hdr = parse_hdr(hdr, &mut buf, &HEADER_CHARS)?;
@@ -1927,11 +1575,12 @@ impl<'a> HdrName<'a> {
 
     #[allow(deprecated)]
     pub fn from_static<F, U>(hdr: &'static str, f: F) -> U
-        where F: FnOnce(HdrName) -> U,
+    where
+        F: FnOnce(HdrName) -> U,
     {
         let mut buf = unsafe { mem::uninitialized() };
-        let hdr = parse_hdr(hdr.as_bytes(), &mut buf, &HEADER_CHARS)
-            .expect("static str is invalid name");
+        let hdr =
+            parse_hdr(hdr.as_bytes(), &mut buf, &HEADER_CHARS).expect("static str is invalid name");
         f(hdr)
     }
 }
@@ -1940,11 +1589,9 @@ impl<'a> HdrName<'a> {
 impl<'a> From<HdrName<'a>> for HeaderName {
     fn from(src: HdrName<'a>) -> HeaderName {
         match src.inner {
-            Repr::Standard(s) => {
-                HeaderName {
-                    inner: Repr::Standard(s),
-                }
-            }
+            Repr::Standard(s) => HeaderName {
+                inner: Repr::Standard(s),
+            },
             Repr::Custom(maybe_lower) => {
                 if maybe_lower.lower {
                     let buf = Bytes::from(&maybe_lower.buf[..]);
@@ -1954,7 +1601,7 @@ impl<'a> From<HdrName<'a>> for HeaderName {
                         inner: Repr::Custom(Custom(byte_str)),
                     }
                 } else {
-                    use bytes::{BufMut};
+                    use bytes::BufMut;
                     let mut dst = BytesMut::with_capacity(maybe_lower.buf.len());
 
                     for b in maybe_lower.buf.iter() {
@@ -1977,24 +1624,20 @@ impl<'a> PartialEq<HdrName<'a>> for HeaderName {
     #[inline]
     fn eq(&self, other: &HdrName<'a>) -> bool {
         match self.inner {
-            Repr::Standard(a) => {
-                match other.inner {
-                    Repr::Standard(b) => a == b,
-                    _ => false,
-                }
-            }
-            Repr::Custom(Custom(ref a)) => {
-                match other.inner {
-                    Repr::Custom(ref b) => {
-                        if b.lower {
-                            a.as_bytes() == b.buf
-                        } else {
-                            eq_ignore_ascii_case(a.as_bytes(), b.buf)
-                        }
+            Repr::Standard(a) => match other.inner {
+                Repr::Standard(b) => a == b,
+                _ => false,
+            },
+            Repr::Custom(Custom(ref a)) => match other.inner {
+                Repr::Custom(ref b) => {
+                    if b.lower {
+                        a.as_bytes() == b.buf
+                    } else {
+                        eq_ignore_ascii_case(a.as_bytes(), b.buf)
                     }
-                    _ => false,
                 }
-            }
+                _ => false,
+            },
         }
     }
 }
@@ -2030,15 +1673,16 @@ fn eq_ignore_ascii_case(lower: &[u8], s: &[u8]) -> bool {
         return false;
     }
 
-    lower.iter().zip(s).all(|(a, b)| {
-        *a == HEADER_CHARS[*b as usize]
-    })
+    lower
+        .iter()
+        .zip(s)
+        .all(|(a, b)| *a == HEADER_CHARS[*b as usize])
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use self::StandardHeader::Vary;
+    use super::*;
 
     #[test]
     fn test_bounds() {
@@ -2050,7 +1694,11 @@ mod tests {
     fn test_parse_invalid_headers() {
         for i in 0..128 {
             let hdr = vec![1u8; i];
-            assert!(HeaderName::from_bytes(&hdr).is_err(), "{} invalid header chars did not fail", i);
+            assert!(
+                HeaderName::from_bytes(&hdr).is_err(),
+                "{} invalid header chars did not fail",
+                i
+            );
         }
     }
 
@@ -2071,7 +1719,10 @@ mod tests {
             }),
         });
 
-        assert_eq!(name.inner, Repr::Custom(Custom(ByteStr::from_static("hello-world"))));
+        assert_eq!(
+            name.inner,
+            Repr::Custom(Custom(ByteStr::from_static("hello-world")))
+        );
 
         let name = HeaderName::from(HdrName {
             inner: Repr::Custom(MaybeLower {
@@ -2080,50 +1731,69 @@ mod tests {
             }),
         });
 
-        assert_eq!(name.inner, Repr::Custom(Custom(ByteStr::from_static("hello-world"))));
+        assert_eq!(
+            name.inner,
+            Repr::Custom(Custom(ByteStr::from_static("hello-world")))
+        );
     }
 
     #[test]
     fn test_eq_hdr_name() {
         use self::StandardHeader::Vary;
 
-        let a = HeaderName { inner: Repr::Standard(Vary) };
-        let b = HdrName { inner: Repr::Standard(Vary) };
+        let a = HeaderName {
+            inner: Repr::Standard(Vary),
+        };
+        let b = HdrName {
+            inner: Repr::Standard(Vary),
+        };
 
         assert_eq!(a, b);
 
-        let a = HeaderName { inner: Repr::Custom(Custom(ByteStr::from_static("vaary"))) };
+        let a = HeaderName {
+            inner: Repr::Custom(Custom(ByteStr::from_static("vaary"))),
+        };
         assert_ne!(a, b);
 
-        let b = HdrName { inner: Repr::Custom(MaybeLower {
-            buf: b"vaary",
-            lower: true,
-        })};
+        let b = HdrName {
+            inner: Repr::Custom(MaybeLower {
+                buf: b"vaary",
+                lower: true,
+            }),
+        };
 
         assert_eq!(a, b);
 
-        let b = HdrName { inner: Repr::Custom(MaybeLower {
-            buf: b"vaary",
-            lower: false,
-        })};
+        let b = HdrName {
+            inner: Repr::Custom(MaybeLower {
+                buf: b"vaary",
+                lower: false,
+            }),
+        };
 
         assert_eq!(a, b);
 
-        let b = HdrName { inner: Repr::Custom(MaybeLower {
-            buf: b"VAARY",
-            lower: false,
-        })};
+        let b = HdrName {
+            inner: Repr::Custom(MaybeLower {
+                buf: b"VAARY",
+                lower: false,
+            }),
+        };
 
         assert_eq!(a, b);
 
-        let a = HeaderName { inner: Repr::Standard(Vary) };
+        let a = HeaderName {
+            inner: Repr::Standard(Vary),
+        };
         assert_ne!(a, b);
     }
 
     #[test]
     fn test_from_static_std() {
-        let a = HeaderName { inner: Repr::Standard(Vary) };
-        
+        let a = HeaderName {
+            inner: Repr::Standard(Vary),
+        };
+
         let b = HeaderName::from_static("vary");
         assert_eq!(a, b);
 
@@ -2135,18 +1805,20 @@ mod tests {
     #[should_panic]
     fn test_from_static_std_uppercase() {
         HeaderName::from_static("Vary");
-    } 
+    }
 
     #[test]
     #[should_panic]
     fn test_from_static_std_symbol() {
         HeaderName::from_static("vary{}");
-    } 
+    }
 
     // MaybeLower { lower: true }
     #[test]
     fn test_from_static_custom_short() {
-        let a = HeaderName { inner: Repr::Custom(Custom(ByteStr::from_static("customheader"))) };
+        let a = HeaderName {
+            inner: Repr::Custom(Custom(ByteStr::from_static("customheader"))),
+        };
         let b = HeaderName::from_static("customheader");
         assert_eq!(a, b);
     }
@@ -2166,11 +1838,13 @@ mod tests {
     // MaybeLower { lower: false }
     #[test]
     fn test_from_static_custom_long() {
-        let a = HeaderName { inner: Repr::Custom(Custom(ByteStr::from_static(
-            "longer-than-63--thisheaderislongerthansixtythreecharactersandthushandleddifferent"
-        ))) };
+        let a = HeaderName {
+            inner: Repr::Custom(Custom(ByteStr::from_static(
+                "longer-than-63--thisheaderislongerthansixtythreecharactersandthushandleddifferent",
+            ))),
+        };
         let b = HeaderName::from_static(
-            "longer-than-63--thisheaderislongerthansixtythreecharactersandthushandleddifferent"
+            "longer-than-63--thisheaderislongerthansixtythreecharactersandthushandleddifferent",
         );
         assert_eq!(a, b);
     }
@@ -2179,7 +1853,7 @@ mod tests {
     #[should_panic]
     fn test_from_static_custom_long_uppercase() {
         HeaderName::from_static(
-            "Longer-Than-63--ThisHeaderIsLongerThanSixtyThreeCharactersAndThusHandledDifferent"
+            "Longer-Than-63--ThisHeaderIsLongerThanSixtyThreeCharactersAndThusHandledDifferent",
         );
     }
 
@@ -2193,7 +1867,9 @@ mod tests {
 
     #[test]
     fn test_from_static_custom_single_char() {
-        let a = HeaderName { inner: Repr::Custom(Custom(ByteStr::from_static("a"))) };
+        let a = HeaderName {
+            inner: Repr::Custom(Custom(ByteStr::from_static("a"))),
+        };
         let b = HeaderName::from_static("a");
         assert_eq!(a, b);
     }
