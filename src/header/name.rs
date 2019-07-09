@@ -1071,10 +1071,9 @@ fn parse_hdr<'a>(
         0 => Err(InvalidHeaderName::new()),
         len if len > 64 => Ok(HdrName::custom(data, false)),
         len => {
-            let word = &mut b[..len];
-            // Read from data into the buffer (word) - transforming using `table` as we go
-            data.iter().take(len).enumerate().for_each(|(i, c)| word[i] = table[*c as usize]);
-            match word as &[u8] {
+            // Read from data into the buffer - transforming using `table` as we go
+            data.iter().take(len).enumerate().for_each(|(i, c)| b[i] = table[*c as usize]);
+            match &b[0..len] {
                 b"te" => Ok(Te.into()),
                 b"age" => Ok(Age.into()),
                 b"via" => Ok(Via.into()),
